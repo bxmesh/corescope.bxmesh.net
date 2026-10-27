@@ -1,0 +1,5 @@
+apiVersion: v2
+name: corescope-bxmesh-net
+description: The BxMesh MQTT broker (EMQX) and CoreScope, the MeshCore packet analyser
+type: application
+version: 0.1.0
