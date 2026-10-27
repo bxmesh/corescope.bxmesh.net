@@ -1,9 +1,10 @@
 #!/bin/sh
 # BXMesh's entrypoint for CoreScope: one container, one process.
-# CORESCOPE_ROLE picks which (set per service in dmz/services.yml):
-#   ingestor  corescope-ingestor: MQTT -> SQLite. Owns the schema migrations.
-#   server    corescope-server: the API and web UI on port 3000.
-# Both share /app/data: the database and the ingestor's stats file.
+# CORESCOPE_ROLE picks which (set per container in deploy/):
+#   ingestor  MQTT -> SQLite. Owns the schema migrations.
+#   server    the API and web UI on port 3000.
+# Both share /app/data, one volume in one pod: the database and the
+# ingestor's stats file.
 #
 # 1. Renders /app/config.json from /app/config.template.json: the MQTT sources
 #    (NSW Mesh's public broker, filtered to BHS; our own broker as well when
@@ -16,7 +17,7 @@
 #    backup back first, and records it in /app/data/.last-restore.
 # 3. The server: waits for the ingestor's database and stats file, since it
 #    refuses to start before the migrations have run. If it still exits, the
-#    container stops and dmz-controller starts it again.
+#    container stops and the kubelet starts it again.
 set -eu
 data=/app/data
 release=$(cat /app/RELEASE_TAG)

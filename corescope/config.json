@@ -37,8 +37,7 @@
     "maxConnsPerIP": 0,
     "upgradesPerMinPerIP": 30,
     "trustedProxies": [
-      "172.16.254.17",
-      "172.16.254.18"
+      "10.244.0.0/16"
     ],
     "deny": []
   },
