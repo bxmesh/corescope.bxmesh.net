@@ -5,7 +5,7 @@
 
 # false until the restore Job has copied emqx-data back (O163): EMQX stays at 0 replicas. The
 # owner sets it to true by pull request once the restore has succeeded.
-restored: false
+restored: true
 
 # EMQX: exactly one pod, never two at once (its built-in database of logins must have exactly one
 # writer). A StatefulSet, so a replacement starts only once the old pod is gone.
