@@ -63,7 +63,7 @@ spec:
 {{- if .Values.corescope.restored }}
 ---
 # corescope.bxmesh.net: the API and web UI, with its live view over a WebSocket, so no request
-# timeout. Only once CoreScope runs here: until then the name stays where it is.
+# timeout. Only while CoreScope runs here (corescope.restored).
 apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
 metadata:
