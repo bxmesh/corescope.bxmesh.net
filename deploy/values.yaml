@@ -36,7 +36,7 @@ corescope:
   restored: true
   image:
     repository: ghcr.io/bxmesh/corescope.bxmesh.net/corescope
-    tag: "80982cbb47d877f9d874ffc57ee0839865408d0e"  # CI writes the commit SHA here, on the pull request that changed corescope/ (O14)
+    tag: "bdad66b2f4048c777176f3d25f108ccf2c870bd6"  # CI writes the commit SHA here, on the pull request that changed corescope/ (O14)
   # The broker, in this namespace: plain MQTT, inside the cluster only.
   broker: mqtt://emqx:1883
   ingestor:

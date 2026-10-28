@@ -274,7 +274,7 @@
     "bufferKm": 25
   },
   "foreignAdverts": {
-    "mode": "flag"
+    "mode": "drop"
   },
   "regions": {
     "BHS": "Bathurst and Central West"
@@ -447,6 +447,6 @@
     }
   },
   "customizer": {
-    "disabledTabs": []
+    "disabledTabs": ["geofilter"]
   }
 }
