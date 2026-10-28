@@ -1,0 +1,86 @@
+{{- $r := .Values.route }}
+# mqtt.bxmesh.net: observers, MQTT over WebSockets (Cloudflare ends TLS). EMQX's listener is on
+# "/"; openHop asks for "/mqtt" (paho's default), which is rewritten to "/", as cluster-01's edges
+# did. No request timeout: an MQTT connection stays open for as long as the observer runs.
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: mqtt
+  labels:
+    {{- include "corescope.labels" . | nindent 4 }}
+spec:
+  parentRefs:
+    - name: {{ $r.gateway }}
+      namespace: {{ $r.gatewayNamespace }}
+      sectionName: {{ $r.sectionName }}
+  hostnames:
+    - {{ $r.mqttHostname }}
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /mqtt
+      filters:
+        - type: URLRewrite
+          urlRewrite:
+            path:
+              type: ReplaceFullPath
+              replaceFullPath: /
+      backendRefs:
+        - name: emqx
+          port: 8083
+      timeouts:
+        request: 0s
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /
+      backendRefs:
+        - name: emqx
+          port: 8083
+      timeouts:
+        request: 0s
+---
+# mqtt-admin.bxmesh.net: EMQX's dashboard, behind Cloudflare Access (bxmesh/terraform). Its
+# Access app must exist before external-dns writes the name (spec: Public ingress).
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: mqtt-admin
+  labels:
+    {{- include "corescope.labels" . | nindent 4 }}
+spec:
+  parentRefs:
+    - name: {{ $r.gateway }}
+      namespace: {{ $r.gatewayNamespace }}
+      sectionName: {{ $r.sectionName }}
+  hostnames:
+    - {{ $r.adminHostname }}
+  rules:
+    - backendRefs:
+        - name: emqx
+          port: 18083
+{{- if .Values.corescope.restored }}
+---
+# corescope.bxmesh.net: the API and web UI, with its live view over a WebSocket, so no request
+# timeout. Only once CoreScope runs here: until then the name stays where it is.
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: corescope
+  labels:
+    {{- include "corescope.labels" . | nindent 4 }}
+spec:
+  parentRefs:
+    - name: {{ $r.gateway }}
+      namespace: {{ $r.gatewayNamespace }}
+      sectionName: {{ $r.sectionName }}
+  hostnames:
+    - {{ $r.corescopeHostname }}
+  rules:
+    - backendRefs:
+        - name: corescope
+          port: 80
+      timeouts:
+        request: 0s
+{{- end }}

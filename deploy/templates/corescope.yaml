@@ -1,0 +1,125 @@
+# CoreScope v3.15.0, as the image's user corescope (uid 1000; corescope/Dockerfile). Staged off
+# until the T620 moves (O94): no pod and no route while corescope.restored is false.
+{{- $c := .Values.corescope }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: corescope
+  labels:
+    {{- include "corescope.labels" . | nindent 4 }}
+    app.kubernetes.io/name: corescope
+spec:
+  replicas: {{ ternary 1 0 $c.restored }}
+  strategy:
+    type: Recreate  # one SQLite writer: never two pods at once
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: corescope
+  template:
+    metadata:
+      labels:
+        {{- include "corescope.labels" . | nindent 8 }}
+        app.kubernetes.io/name: corescope
+    spec:
+      automountServiceAccountToken: false
+      securityContext:
+        {{- include "corescope.podSecurity" (dict "uid" 1000) | nindent 8 }}
+      containers:
+        # MQTT -> SQLite; owns the schema migrations.
+        - name: ingestor
+          image: {{ include "corescope.image" $c.image }}
+          securityContext:
+            {{- include "corescope.containerSecurity" . | nindent 12 }}
+          env:
+            - name: CORESCOPE_ROLE
+              value: ingestor
+            - name: BXMESH_BROKER
+              value: {{ $c.broker | quote }}
+          resources:
+            {{- toYaml $c.ingestor.resources | nindent 12 }}
+          volumeMounts:
+            - name: data
+              mountPath: /app/data
+            - name: secrets
+              mountPath: /srv/secrets
+              readOnly: true
+        # The API and web UI.
+        - name: server
+          image: {{ include "corescope.image" $c.image }}
+          securityContext:
+            {{- include "corescope.containerSecurity" . | nindent 12 }}
+          env:
+            - name: CORESCOPE_ROLE
+              value: server
+            - name: GOMEMLIMIT
+              value: {{ $c.server.gomemlimit | quote }}
+          ports:
+            - name: http
+              containerPort: 3000
+              protocol: TCP
+          # 503 until its packet store has loaded: up to 900 s at start (services.yml's grace).
+          startupProbe:
+            httpGet:
+              path: /api/healthz
+              port: http
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 90
+          readinessProbe:
+            httpGet:
+              path: /api/healthz
+              port: http
+            {{- toYaml .Values.probes.readiness | nindent 12 }}
+          livenessProbe:
+            httpGet:
+              path: /api/healthz
+              port: http
+            {{- toYaml .Values.probes.liveness | nindent 12 }}
+          resources:
+            {{- toYaml $c.server.resources | nindent 12 }}
+          volumeMounts:
+            - name: data
+              mountPath: /app/data
+            - name: secrets
+              mountPath: /srv/secrets
+              readOnly: true
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: corescope-data
+        - name: secrets
+          secret:
+            secretName: corescope
+            defaultMode: 0440
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: corescope
+  labels:
+    {{- include "corescope.labels" . | nindent 4 }}
+    app.kubernetes.io/name: corescope
+spec:
+  selector:
+    app.kubernetes.io/name: corescope
+  ports:
+    - name: http
+      port: 80
+      targetPort: http
+      protocol: TCP
+---
+# corescope-data: new and empty; its data comes back from the T620 when that moves (O94).
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: corescope-data
+  labels:
+    {{- include "corescope.labels" . | nindent 4 }}
+    app.kubernetes.io/name: corescope
+  {{- include "corescope.keep" $c.data.keep | nindent 2 }}
+spec:
+  accessModes: [ReadWriteOnce]
+  storageClassName: {{ $c.data.storageClassName }}
+  resources:
+    requests:
+      storage: {{ $c.data.size }}

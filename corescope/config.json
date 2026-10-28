@@ -1,0 +1,452 @@
+{
+  "port": 3000,
+  "apiKey": "@@API_KEY@@",
+  "nodeBlacklist": [],
+  "hiddenNamePrefixes": [
+    "🚫"
+  ],
+  "observerIATAWhitelist": [],
+  "retention": {
+    "nodeDays": 7,
+    "observerDays": 14,
+    "observerPurgeDays": 0,
+    "packetDays": 30,
+    "clientRxDays": 30,
+    "clientRxObsDays": 30,
+    "clientRfDays": 30,
+    "clientRegionsDays": 30,
+    "clientNodeNamesDays": 30,
+    "hopIndexDays": 0
+  },
+  "db": {
+    "vacuumOnStartup": false,
+    "incrementalVacuumPages": 1024,
+    "load": {
+      "chunkSize": 10000
+    }
+  },
+  "listLimits": {
+    "packetsMax": 10000,
+    "nodesMax": 2000,
+    "analyticsMax": 200,
+    "channelMessagesMax": 500,
+    "bulkHealthMax": 200
+  },
+  "corsAllowedOrigins": [],
+  "webSocket": {
+    "maxConnsPerIP": 0,
+    "upgradesPerMinPerIP": 30,
+    "trustedProxies": [
+      "10.244.0.0/16"
+    ],
+    "deny": []
+  },
+  "branding": {
+    "siteName": "BXMesh CoreScope",
+    "tagline": "Live view of the Bathurst and Central West MeshCore network",
+    "logoUrl": null,
+    "faviconUrl": null,
+    "homeUrl": "https://bxmesh.net"
+  },
+  "theme": {
+    "accent": "#4a9eff",
+    "accentHover": "#6db3ff",
+    "navBg": "#0f0f23",
+    "navBg2": "#1a1a2e",
+    "navActiveBg": "rgba(74,158,255,0.15)",
+    "statusGreen": "#45644c",
+    "statusYellow": "#b08b2d",
+    "statusRed": "#b54a4a"
+  },
+  "nodeColors": {
+    "repeater": "#dc2626",
+    "companion": "#2563eb",
+    "room": "#16a34a",
+    "sensor": "#d97706",
+    "observer": "#8b5cf6"
+  },
+  "markerStroke": {
+    "color": "#fff",
+    "width": 2,
+    "opacity": 1
+  },
+  "map": {
+    "tiles": {
+      "darkDefault": "esri-darkgray-labels",
+      "lightDefault": "opentopomap",
+      "providers": {
+        "carto": {
+          "enabled": false,
+          "key": "",
+          "domain": ""
+        },
+        "osm": {
+          "enabled": false,
+          "provider": "",
+          "token": ""
+        },
+        "opentopomap": {
+          "enabled": true
+        },
+        "stamen": {
+          "enabled": false,
+          "token": ""
+        },
+        "usgs": {
+          "enabled": false
+        }
+      }
+    }
+  },
+  "home": {
+    "heroTitle": "BXMesh CoreScope",
+    "heroSubtitle": "Find your node on the Bathurst mesh to start watching it.",
+    "steps": [
+      {
+        "emoji": "📡",
+        "title": "Connect",
+        "description": "Link your node to the mesh"
+      },
+      {
+        "emoji": "🔍",
+        "title": "Monitor",
+        "description": "Watch packets flow in real-time"
+      },
+      {
+        "emoji": "📊",
+        "title": "Analyze",
+        "description": "Understand your network's health"
+      }
+    ],
+    "checklist": [
+      {
+        "question": "How do I add my node?",
+        "answer": "Search for your node name or paste your public key."
+      },
+      {
+        "question": "What regions are covered?",
+        "answer": "Check the map page to see active observers and nodes."
+      }
+    ],
+    "footerLinks": [
+      {
+        "label": "📦 Packets",
+        "url": "#/packets"
+      },
+      {
+        "label": "🗺️ Network Map",
+        "url": "#/map"
+      },
+      {
+        "label": "🔴 Live",
+        "url": "#/live"
+      },
+      {
+        "label": "📡 All Nodes",
+        "url": "#/nodes"
+      },
+      {
+        "label": "💬 Channels",
+        "url": "#/channels"
+      }
+    ]
+  },
+  "mqttSources": "@@MQTT_SOURCES@@",
+  "channelKeys": {
+    "Public": "8b3387e9c5cdea6ac9e5edbaa115cd72"
+  },
+  "hashChannels": [
+    "#bathurst",
+    "#nsw",
+    "#test"
+  ],
+  "healthThresholds": {
+    "infraDegradedHours": 24,
+    "infraSilentHours": 72,
+    "nodeDegradedHours": 1,
+    "nodeSilentHours": 24,
+    "relayActiveHours": 24,
+    "observerOnlineMinutes": 60,
+    "observerStaleMinutes": 1440
+  },
+  "pathTrust": {
+    "minHashBytesForMapping": 1
+  },
+  "defaultRegion": "BHS",
+  "mapDefaults": {
+    "center": [
+      -33.42,
+      149.58
+    ],
+    "zoom": 9
+  },
+  "geo_filter": {
+    "polygon": [
+      [
+        -33.176,
+        147.297
+      ],
+      [
+        -33.531,
+        147.403
+      ],
+      [
+        -33.909,
+        147.54
+      ],
+      [
+        -34.142,
+        147.759
+      ],
+      [
+        -34.203,
+        149.695
+      ],
+      [
+        -34.206,
+        149.796
+      ],
+      [
+        -34.15,
+        150.123
+      ],
+      [
+        -33.966,
+        150.237
+      ],
+      [
+        -33.342,
+        150.591
+      ],
+      [
+        -33.11,
+        150.62
+      ],
+      [
+        -32.389,
+        150.32
+      ],
+      [
+        -32.321,
+        150.27
+      ],
+      [
+        -32.184,
+        150.064
+      ],
+      [
+        -32.119,
+        149.932
+      ],
+      [
+        -32.058,
+        149.796
+      ],
+      [
+        -31.771,
+        148.261
+      ],
+      [
+        -31.799,
+        148.141
+      ],
+      [
+        -31.867,
+        147.947
+      ],
+      [
+        -31.927,
+        147.837
+      ],
+      [
+        -31.989,
+        147.746
+      ],
+      [
+        -32.182,
+        147.503
+      ],
+      [
+        -33.105,
+        147.308
+      ]
+    ],
+    "bufferKm": 25
+  },
+  "foreignAdverts": {
+    "mode": "flag"
+  },
+  "regions": {
+    "BHS": "Bathurst and Central West"
+  },
+  "regionFallback": {
+    "maxHops": 3
+  },
+  "cacheTTL": {
+    "stats": 10,
+    "nodeDetail": 300,
+    "nodeHealth": 300,
+    "nodeList": 90,
+    "bulkHealth": 600,
+    "networkStatus": 600,
+    "observers": 300,
+    "channels": 15,
+    "channelMessages": 10,
+    "analyticsRF": 1800,
+    "analyticsTopology": 1800,
+    "analyticsChannels": 1800,
+    "analyticsHashSizes": 3600,
+    "analyticsSubpaths": 3600,
+    "analyticsSubpathDetail": 3600,
+    "nodeAnalytics": 60,
+    "nodeSearch": 10,
+    "invalidationDebounce": 30
+  },
+  "liveMap": {
+    "propagationBufferMs": 5000,
+    "maxNodes": 2000
+  },
+  "timestamps": {
+    "defaultMode": "ago",
+    "timezone": "local",
+    "formatPreset": "iso",
+    "customFormat": "",
+    "allowCustomFormat": false
+  },
+  "packetStore": {
+    "maxMemoryMB": 8192,
+    "estimatedPacketBytes": 450,
+    "retentionHours": 168,
+    "hotStartupHours": 24
+  },
+  "runtime": {
+    "maxMemoryMB": 0
+  },
+  "resolvedPath": {
+    "backfillHours": 24
+  },
+  "ingestBufferSize": 50000,
+  "neighborGraph": {
+    "maxAgeDays": 5,
+    "maxEdgeKm": 500,
+    "cacheRecomputeIntervalSeconds": 300
+  },
+  "observersCache": {
+    "ttlSeconds": 30
+  },
+  "knownChannelsUrl": "",
+  "knownChannelsRefreshMs": 86400000,
+  "rfParams": {
+    "nodesUrl": "",
+    "presetsUrl": "",
+    "refreshHours": 6,
+    "maxAgeDays": 7,
+    "compareRadiusKm": 50
+  },
+  "batteryThresholds": {
+    "lowMv": 3300,
+    "criticalMv": 3000
+  },
+  "dutyCycleWarnPct": 10,
+  "compression": {
+    "gzip": false,
+    "websocket": false,
+    "level": 6,
+    "minSizeBytes": 1024,
+    "contentTypes": [
+      "application/json",
+      "application/javascript",
+      "application/xml",
+      "text/html",
+      "text/css",
+      "text/plain",
+      "image/svg+xml"
+    ]
+  },
+  "clientRegions": {
+    "enabled": false
+  },
+  "clientNodeNames": {
+    "enabled": false
+  },
+  "clientRxCoverage": {
+    "enabled": false
+  },
+  "clientRxObservations": {
+    "enabled": false
+  },
+  "clientRfSamples": {
+    "enabled": false
+  },
+  "autoRegionKeys": {
+    "enabled": false,
+    "maxDerived": 256,
+    "refreshMinutes": 15
+  },
+  "analytics": {
+    "defaultIntervalSeconds": 300,
+    "pauseWhenIdle": false,
+    "recomputeIntervalSeconds": {
+      "topology": 300,
+      "rf": 300,
+      "distance": 300,
+      "channels": 300,
+      "hashCollisions": 300,
+      "hashSizes": 300,
+      "roles": 300,
+      "observersClockSkew": 300,
+      "nodesClockSkew": 300
+    },
+    "loraPreset": {
+      "freq": 915075000,
+      "bw": 125,
+      "sf": 9,
+      "cr": 5
+    }
+  },
+  "userManagement": {
+    "enabled": false,
+    "dbPath": "",
+    "adminEmails": [
+      "operator@example.org"
+    ],
+    "publicBaseUrl": "https://corescope.example.org",
+    "sessionDays": 30,
+    "trustedProxies": [],
+    "mail": {
+      "provider": "brevo",
+      "brevoApiKey": "",
+      "postalBaseUrl": "",
+      "postalApiKey": "",
+      "fromEmail": "noreply@example.org",
+      "fromName": "CoreScope",
+      "webhookSecret": ""
+    },
+    "channelProposals": {
+      "enabled": false,
+      "maxPending": 100,
+      "maxApproved": 128,
+      "perUserPerDay": 5
+    },
+    "notifications": {
+      "enabled": false,
+      "intervalMinutes": 5,
+      "perUserPerDay": 20,
+      "maxMailsPerDay": 100,
+      "maxWatchesPerUser": 50,
+      "adaptiveOffline": {
+        "enabled": false,
+        "floorMinutes": 30,
+        "minObservers": 3
+      }
+    },
+    "backup": {
+      "enabled": true,
+      "dir": "",
+      "keep": 7
+    }
+  },
+  "customizer": {
+    "disabledTabs": []
+  }
+}

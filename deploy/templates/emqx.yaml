@@ -1,0 +1,125 @@
+# EMQX 6.3.2, as the image's user emqx (uid 1000; emqx/Dockerfile). Its node name is fixed
+# (emqx@127.0.0.1, in emqx.conf and the entrypoint), because the built-in database is tied to it.
+{{- $e := .Values.emqx }}
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: emqx
+  labels:
+    {{- include "corescope.labels" . | nindent 4 }}
+    app.kubernetes.io/name: emqx
+spec:
+  replicas: {{ ternary 1 0 .Values.restored }}
+  serviceName: emqx
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: emqx
+  template:
+    metadata:
+      labels:
+        {{- include "corescope.labels" . | nindent 8 }}
+        app.kubernetes.io/name: emqx
+    spec:
+      automountServiceAccountToken: false
+      securityContext:
+        {{- include "corescope.podSecurity" (dict "uid" 1000) | nindent 8 }}
+      containers:
+        - name: emqx
+          image: {{ include "corescope.image" $e.image }}
+          securityContext:
+            {{- include "corescope.containerSecurity" . | nindent 12 }}
+          ports:
+            - name: mqtt       # plain MQTT, for CoreScope, inside the cluster only
+              containerPort: 1883
+              protocol: TCP
+            - name: ws         # MQTT over WebSockets: mqtt.bxmesh.net
+              containerPort: 8083
+              protocol: TCP
+            - name: dashboard  # the dashboard and REST API: mqtt-admin.bxmesh.net, and bxmesh.net's
+              containerPort: 18083  # observers app, to create logins (O127)
+              protocol: TCP
+          # The dashboard port answers /status (services.yml's health and health_port).
+          startupProbe:
+            httpGet:
+              path: /status
+              port: dashboard
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 60  # cluster-01's 600 s grace
+          readinessProbe:
+            httpGet:
+              path: /status
+              port: dashboard
+            {{- toYaml .Values.probes.readiness | nindent 12 }}
+          livenessProbe:
+            httpGet:
+              path: /status
+              port: dashboard
+            {{- toYaml .Values.probes.liveness | nindent 12 }}
+          resources:
+            {{- toYaml $e.resources | nindent 12 }}
+          volumeMounts:
+            - name: data
+              mountPath: /opt/emqx/data
+            # The entrypoint reads each secret as a file here, as on cluster-01.
+            - name: secrets
+              mountPath: /srv/secrets
+              readOnly: true
+            # Where the entrypoint writes the files emqx.conf points at: fresh, in memory, on
+            # every start, as cluster-01's tmpfs /run was.
+            - name: run
+              mountPath: /run
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: emqx-data
+        - name: secrets
+          secret:
+            secretName: emqx
+            defaultMode: 0440  # the pod's group (fsGroup) reads them
+        - name: run
+          emptyDir:
+            medium: Memory
+            sizeLimit: 16Mi
+---
+# One Service, three ports: the routes use ws and dashboard, CoreScope uses mqtt, and bxmesh.net's
+# observers app uses dashboard (http://emqx.dmz-corescope.svc.cluster.local:18083).
+apiVersion: v1
+kind: Service
+metadata:
+  name: emqx
+  labels:
+    {{- include "corescope.labels" . | nindent 4 }}
+    app.kubernetes.io/name: emqx
+spec:
+  selector:
+    app.kubernetes.io/name: emqx
+  ports:
+    - name: mqtt
+      port: 1883
+      targetPort: mqtt
+      protocol: TCP
+    - name: ws
+      port: 8083
+      targetPort: ws
+      protocol: TCP
+    - name: dashboard
+      port: 18083
+      targetPort: dashboard
+      protocol: TCP
+---
+# emqx-data: new and empty; the restore Job copies cluster-01's dmz/data/emqx into it (O163).
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: emqx-data
+  labels:
+    {{- include "corescope.labels" . | nindent 4 }}
+    app.kubernetes.io/name: emqx
+  {{- include "corescope.keep" $e.data.keep | nindent 2 }}
+spec:
+  accessModes: [ReadWriteOnce]
+  storageClassName: {{ $e.data.storageClassName }}
+  resources:
+    requests:
+      storage: {{ $e.data.size }}

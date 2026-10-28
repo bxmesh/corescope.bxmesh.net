@@ -1,0 +1,92 @@
+# corescope.bxmesh.net, in the namespace dmz-corescope: EMQX, the broker observers stream into
+# (mqtt.bxmesh.net, its dashboard on mqtt-admin.bxmesh.net), and CoreScope (corescope.bxmesh.net),
+# which reads it. Settings map cluster-01's dmz/services.yml (emqx, corescope-ingestor,
+# corescope-server) one to one.
+
+# false until the restore Job has copied emqx-data back (O163): EMQX stays at 0 replicas. The
+# owner sets it to true by pull request once the restore has succeeded.
+restored: false
+
+# EMQX: exactly one pod, never two at once (its built-in database of logins must have exactly one
+# writer). A StatefulSet, so a replacement starts only once the old pod is gone.
+emqx:
+  image:
+    repository: ghcr.io/bxmesh/corescope.bxmesh.net/emqx
+    tag: "a85bd61ddb796ef52782a4918d57b7bf15e45260"  # CI writes the commit SHA here, on the pull request that changed emqx/ (O14)
+  resources:  # cores: 2 and memory: 1024 in services.yml: caps, not reservations
+    requests:
+      cpu: 250m
+      memory: 1Gi
+    limits:
+      cpu: "2"
+      memory: 1Gi
+  # Users, admin accounts, sessions. New and empty; the restore Job copies cluster-01's
+  # dmz/data/emqx into it (O163). Mounted at /opt/emqx/data.
+  data:
+    storageClassName: ceph-block
+    size: 4Gi   # placeholder: the owner sets it from the measured folder size
+    keep: true  # Argo never prunes or deletes the volume
+
+# CoreScope: staged off until the T620 moves, where its data is (O94). One pod with both
+# processes, the ingestor and the server, sharing one volume (one SQLite writer).
+corescope:
+  # false: no pod, and no route (so external-dns leaves corescope.bxmesh.net alone). The owner
+  # sets it to true by pull request once its data is restored onto corescope-data.
+  restored: false
+  image:
+    repository: ghcr.io/bxmesh/corescope.bxmesh.net/corescope
+    tag: "a85bd61ddb796ef52782a4918d57b7bf15e45260"  # CI writes the commit SHA here, on the pull request that changed corescope/ (O14)
+  # The broker, in this namespace: plain MQTT, inside the cluster only.
+  broker: mqtt://emqx:1883
+  ingestor:
+    resources:  # cores: 2, memory: 16384 (mostly page cache)
+      requests:
+        cpu: 250m
+        memory: 2Gi
+      limits:
+        cpu: "2"
+        memory: 16Gi
+  server:
+    # Packet store 8 GiB (corescope/config.json), Go limit 16 GiB, the rest page cache.
+    gomemlimit: 16GiB
+    resources:  # cores: 2, memory: 32768
+      requests:
+        cpu: 250m
+        memory: 8Gi
+      limits:
+        cpu: "2"
+        memory: 32Gi
+  # The SQLite database, the ingestor's stats file and its pre-upgrade backups. On cluster-01
+  # it's on the T620's own disks (dmz_data), not CephFS.
+  data:
+    storageClassName: ceph-block
+    size: 50Gi  # placeholder: the owner sets it from the measured folder size
+    keep: true
+
+# The routes, on BxMesh's own gateway (O73).
+route:
+  gateway: bxmesh
+  gatewayNamespace: platform-gateways
+  sectionName: http
+  mqttHostname: mqtt.bxmesh.net
+  adminHostname: mqtt-admin.bxmesh.net   # behind Cloudflare Access (bxmesh/terraform)
+  corescopeHostname: corescope.bxmesh.net
+
+# Probes, from cluster-01's health checks (the edges' and dmz-controller's).
+probes:
+  readiness:  # the edge health check: every 5 s, 2 s timeout
+    periodSeconds: 5
+    timeoutSeconds: 2
+    failureThreshold: 3
+  liveness:   # dmz-controller's defaults: every 30 s, 5 s timeout, 6 failures
+    periodSeconds: 30
+    timeoutSeconds: 5
+    failureThreshold: 6
+
+# Secrets, from OpenBao through External Secrets (spec: Security, secrets and access).
+secrets:
+  openbao:
+    server: http://openbao-active.openbao.svc:8200
+    path: secret
+    authMountPath: kubernetes
+  refreshInterval: 1h
