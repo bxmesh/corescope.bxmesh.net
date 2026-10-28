@@ -13,5 +13,5 @@ CoreScope and the MQTT broker, EMQX, serving `corescope.bxmesh.net`, `mqtt.bxmes
 
 Observers connect to `mqtt.bxmesh.net` (MQTT over WebSockets, TLS ended at Cloudflare); CoreScope
 reads the broker over plain MQTT inside the cluster. bxmesh.net's observers app creates the
-observers' logins through EMQX's API, on port 18083 of the `emqx` Service (O127). CoreScope stays
-off until the T620 moves, where its data is (O94).
+observers' logins through EMQX's API, on port 18083 of the `emqx` Service (O127). CoreScope reads
+only our broker, and started fresh here: cluster-01's data isn't restored.

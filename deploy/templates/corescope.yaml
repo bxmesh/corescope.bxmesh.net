@@ -1,5 +1,5 @@
-# CoreScope v3.15.0, as the image's user corescope (uid 1000; corescope/Dockerfile). Staged off
-# until the T620 moves (O94): no pod and no route while corescope.restored is false.
+# CoreScope v3.15.0, as the image's user corescope (uid 1000; corescope/Dockerfile). No pod and
+# no route while corescope.restored is false.
 {{- $c := .Values.corescope }}
 apiVersion: apps/v1
 kind: Deployment

@@ -6,9 +6,9 @@
 # Both share /app/data, one volume in one pod: the database and the
 # ingestor's stats file.
 #
-# 1. Renders /app/config.json from /app/config.template.json: the MQTT sources
-#    (NSW Mesh's public broker, filtered to BHS; our own broker as well when
-#    BXMESH_BROKER is set) and the admin API key, from /srv/secrets.
+# 1. Renders /app/config.json from /app/config.template.json: the MQTT source,
+#    our own broker only (BXMESH_BROKER, required), and the admin API key,
+#    from /srv/secrets. NSW Mesh's public broker is no longer a source.
 # 2. The ingestor: before a new CoreScope release first starts, copies the
 #    databases aside to /app/data/backups (migrations can't be undone); keeps 3.
 #    Started as an older release that the database was upgraded from (a
@@ -23,10 +23,8 @@ data=/app/data
 release=$(cat /app/RELEASE_TAG)
 secret() { tr -d '\r\n' < "/srv/secrets/$1"; }
 
-sources='{"name":"nswmesh","broker":"mqtt://mqtt.nswmesh.au:1883","username":"nswmesh","password":"nswmesh","topics":["meshcore/BHS/#"],"iataFilter":["BHS"]}'
-if [ -n "${BXMESH_BROKER:-}" ]; then
-  sources="$sources,{\"name\":\"bxmesh\",\"broker\":\"$BXMESH_BROKER\",\"username\":\"corescope\",\"password\":\"$(secret mqtt_password_corescope)\",\"topics\":[\"meshcore/#\"]}"
-fi
+: "${BXMESH_BROKER:?set BXMESH_BROKER to our broker (deploy/values.yaml, corescope.broker)}"
+sources="{\"name\":\"bxmesh\",\"broker\":\"$BXMESH_BROKER\",\"username\":\"corescope\",\"password\":\"$(secret mqtt_password_corescope)\",\"topics\":[\"meshcore/#\"]}"
 awk -v sources="[$sources]" -v key="$(secret corescope_api_key)" \
   '{ gsub(/"@@MQTT_SOURCES@@"/, sources); gsub(/@@API_KEY@@/, key); print }' \
   /app/config.template.json > /app/config.json.new

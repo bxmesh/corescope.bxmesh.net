@@ -27,15 +27,16 @@ emqx:
     size: 4Gi   # placeholder: the owner sets it from the measured folder size
     keep: true  # Argo never prunes or deletes the volume
 
-# CoreScope: staged off until the T620 moves, where its data is (O94). One pod with both
-# processes, the ingestor and the server, sharing one volume (one SQLite writer).
+# CoreScope: one pod with both processes, the ingestor and the server, sharing one volume (one
+# SQLite writer). It starts fresh on its empty volume, reading only our broker: cluster-01's data
+# isn't restored (the owner's decision of 28 October, replacing O94).
 corescope:
-  # false: no pod, and no route (so external-dns leaves corescope.bxmesh.net alone). The owner
-  # sets it to true by pull request once its data is restored onto corescope-data.
-  restored: false
+  # true: its pod runs and corescope.bxmesh.net is routed; false: no pod, and no route (so
+  # external-dns leaves corescope.bxmesh.net alone).
+  restored: true
   image:
     repository: ghcr.io/bxmesh/corescope.bxmesh.net/corescope
-    tag: "a85bd61ddb796ef52782a4918d57b7bf15e45260"  # CI writes the commit SHA here, on the pull request that changed corescope/ (O14)
+    tag: "80982cbb47d877f9d874ffc57ee0839865408d0e"  # CI writes the commit SHA here, on the pull request that changed corescope/ (O14)
   # The broker, in this namespace: plain MQTT, inside the cluster only.
   broker: mqtt://emqx:1883
   ingestor:
