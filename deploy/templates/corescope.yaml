@@ -51,6 +51,9 @@ spec:
           env:
             - name: CORESCOPE_ROLE
               value: server
+            # The entrypoint renders config.json for both containers, so both need it.
+            - name: BXMESH_BROKER
+              value: {{ $c.broker | quote }}
             - name: GOMEMLIMIT
               value: {{ $c.server.gomemlimit | quote }}
           ports:
