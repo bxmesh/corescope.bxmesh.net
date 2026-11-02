@@ -38,7 +38,8 @@ The customizer's GeoFilter tab is hidden (`customizer.disabledTabs`): the entryp
 `discord/relay.py` posts each new message on MeshCore's `#bathurst` and `Public` channels to a
 Discord channel through its webhook: `#bathurst` to #bathurst, `Public` to #nsw-public-traffic (the
 owner, 2 November 2026). It reads the messages CoreScope has already decoded, from CoreScope's API
-inside the namespace, every 15 seconds, so a message heard by several observers is posted once.
+inside the namespace, every 5 seconds, so a message heard by several observers is posted once.
+Each post shows as from its mesh sender: the webhook post's name is the sender's name on the mesh.
 
 - It remembers the last message posted on each channel on a small volume, so a restart neither
   skips nor repeats. On its very first start it posts nothing older than the newest message.

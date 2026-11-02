@@ -77,7 +77,7 @@ discord:
   channels:
     - {name: "#bathurst", secretKey: bathurst}   # Discord: #bathurst
     - {name: Public, secretKey: public}          # Discord: #nsw-public-traffic
-  pollSeconds: 15
+  pollSeconds: 5
   # The last message posted on each channel, so a restart neither skips nor repeats.
   state:
     storageClassName: ceph-block

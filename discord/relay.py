@@ -2,7 +2,7 @@
 
 Every POLL_SECONDS it reads each channel's latest messages from CoreScope's API
 (GET /api/channels/<name>/messages) and posts the ones it hasn't posted yet, oldest first, to that
-channel's webhook. A message is one transmission, so the same message heard by several observers
+channel's webhook, each under its mesh sender's name. A message is one transmission, so the same message heard by several observers
 is posted once. Which messages were posted is remembered as the highest packetId per channel, in
 STATE_DIR, so a restart neither skips nor repeats; on a channel's first run it starts from the
 newest message and posts nothing older.
@@ -12,13 +12,14 @@ Configuration (environment):
   CHANNELS         channel=secret-file pairs, comma-separated, e.g. "#bathurst=bathurst,Public=public"
   SECRETS_DIR      folder of webhook URL files, one per secret-file name (default /srv/secrets)
   STATE_DIR        folder for the state file (default /var/lib/relay)
-  POLL_SECONDS     default 15
+  POLL_SECONDS     default 5
 
 Standard library only. The webhook URLs are secrets: never logged.
 """
 
 import json
 import os
+import re
 import sys
 import time
 import urllib.error
@@ -28,10 +29,11 @@ import urllib.request
 CORESCOPE_URL = os.environ["CORESCOPE_URL"].rstrip("/")
 SECRETS_DIR = os.environ.get("SECRETS_DIR", "/srv/secrets")
 STATE_DIR = os.environ.get("STATE_DIR", "/var/lib/relay")
-POLL_SECONDS = float(os.environ.get("POLL_SECONDS", "15"))
+POLL_SECONDS = float(os.environ.get("POLL_SECONDS", "5"))
 STATE_FILE = os.path.join(STATE_DIR, "state.json")
-PAGE = 50  # messages read per channel per poll; more than arrive in 15 s
+PAGE = 50  # messages read per channel per poll; far more than arrive in 5 s
 DISCORD_MAX = 2000  # Discord's limit on a message's content
+NAME_MAX = 80  # Discord's limit on a webhook post's username
 
 
 def log(msg):
@@ -89,12 +91,23 @@ def escape(text):
     return text
 
 
+def username(sender):
+    """The mesh sender's name as Discord will take it for a webhook post: 1 to 80 characters, not
+    containing "discord" or "clyde", and not "everyone" or "here" (Discord refuses those)."""
+    name = (sender or "").strip()
+    name = re.sub(r"(?i)discord", "disc0rd", name)
+    name = re.sub(r"(?i)clyde", "clyd3", name)
+    if name.lower() in ("everyone", "here", ""):
+        name = f"{name or 'unknown'} (mesh)"
+    return name[:NAME_MAX]
+
+
 def post(url, message):
-    """Posts one message; True once Discord has it. Waits out a rate limit and tries again."""
-    sender = escape((message.get("sender") or "unknown").strip())
-    content = f"**{sender}**: {escape(message['text'].strip())}"[:DISCORD_MAX]
+    """Posts one message under its mesh sender's name; True once Discord has it. Waits out a rate
+    limit and tries again."""
     body = json.dumps({
-        "content": content,
+        "username": username(message.get("sender")),
+        "content": escape(message["text"].strip())[:DISCORD_MAX],
         # Never ping anyone: a mesh message can't @everyone or @someone on Discord.
         "allowed_mentions": {"parse": []},
     }).encode()
