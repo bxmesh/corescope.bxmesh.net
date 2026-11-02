@@ -46,7 +46,7 @@ jobs:
         run: |
           set -eu
           echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
-          for image in emqx corescope; do
+          for image in emqx corescope discord; do
             tag=$(yq ".${image}.image.tag" deploy/values.yaml)
             if [ -z "$tag" ] || [ "$tag" = null ] || ! git diff --quiet "$BASE"...HEAD -- "$image/"; then
               echo "$image=true" >> "$GITHUB_OUTPUT"; echo "build $image"
@@ -88,6 +88,18 @@ jobs:
             org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
             org.opencontainers.image.revision=${{ steps.plan.outputs.sha }}
 
+      - name: Build discord
+        if: steps.plan.outputs.discord == 'true'
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc  # v7.4.0
+        with:
+          context: discord
+          platforms: linux/amd64
+          push: ${{ env.PUBLISH == 'true' }}
+          tags: ${{ env.IMAGE_PREFIX }}/discord:${{ steps.plan.outputs.sha }}
+          labels: |
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+            org.opencontainers.image.revision=${{ steps.plan.outputs.sha }}
+
       - name: Stage the new tags in deploy/values.yaml
         if: env.PUBLISH == 'true' && contains(steps.plan.outputs.*, 'true')
         env:
@@ -97,7 +109,7 @@ jobs:
         run: |
           set -eu
           built=""
-          for image in emqx corescope; do
+          for image in emqx corescope discord; do
             if [ "$(echo "$BUILT" | jq -r --arg i "$image" '.[$i]')" = true ]; then
               # Only the tag's own line changes (the first "    tag:" in the image's top-level
               # block), so the file keeps its layout and comments.
