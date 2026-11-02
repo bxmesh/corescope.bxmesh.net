@@ -9,6 +9,7 @@ CoreScope and the MQTT broker, EMQX, serving `corescope.bxmesh.net`, `mqtt.bxmes
 | `emqx/` | EMQX 6.3.2 with our config (`emqx.conf`), who may do what (`acl.conf`) and the entrypoint that turns the secrets into its settings. Image `ghcr.io/bxmesh/corescope.bxmesh.net/emqx` |
 | `corescope/` | CoreScope v3.15.0 with our config and entrypoint: the ingestor and the server, one process each. Image `ghcr.io/bxmesh/corescope.bxmesh.net/corescope` |
 | `deploy/` | The chart Argo CD deploys into `dmz-corescope`, from `main`, when the owner syncs (O14) |
+| `discord/` | The Discord relay (`relay.py`, Python's standard library only): posts new messages on `#bathurst` and `Public` to their Discord channels. Image `ghcr.io/bxmesh/corescope.bxmesh.net/discord` |
 | `.github/workflows/build.yml` | On each pull request: builds the images it changes, pushes them tagged with the commit SHA, and writes the tags into `deploy/values.yaml` on the pull request's branch |
 
 Observers connect to `mqtt.bxmesh.net` (MQTT over WebSockets, TLS ended at Cloudflare); CoreScope
@@ -31,3 +32,18 @@ with the permission of an NSW Mesh admin, the owner, given on 28 October 2026.
 
 The customizer's GeoFilter tab is hidden (`customizer.disabledTabs`): the entrypoint renders
 `config.json` from the image at every start, so a change saved there would be lost.
+
+## Channels on Discord
+
+`discord/relay.py` posts each new message on MeshCore's `#bathurst` and `Public` channels to a
+Discord channel through its webhook: `#bathurst` to #bathurst, `Public` to #nsw-public-traffic (the
+owner, 2 November 2026). It reads the messages CoreScope has already decoded, from CoreScope's API
+inside the namespace, every 15 seconds, so a message heard by several observers is posted once.
+
+- It remembers the last message posted on each channel on a small volume, so a restart neither
+  skips nor repeats. On its very first start it posts nothing older than the newest message.
+- Mentions are off: a mesh message can't ping anyone on Discord. Discord's markdown is escaped, so
+  the text shows as it was sent.
+- The webhook URLs are secrets, in OpenBao at `secret/dmz-corescope/discord` (`bathurst`, `public`).
+- A channel is added in `deploy/values.yaml` (`discord.channels`) with its webhook under a new key
+  at that path. `discord.enabled: false` stops it.

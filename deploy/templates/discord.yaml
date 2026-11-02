@@ -1,0 +1,100 @@
+# The Discord relay (discord/relay.py), as uid 10001: every pollSeconds it reads each channel's
+# latest messages from CoreScope's Service and posts the new ones to that channel's webhook. One
+# pod only, so no message is posted twice. No pod while discord.enabled is false.
+{{- $d := .Values.discord }}
+{{- if $d.enabled }}
+{{- $channels := list }}
+{{- range $d.channels }}
+{{- $channels = append $channels (printf "%s=%s" .name .secretKey) }}
+{{- end }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: discord-relay
+  labels:
+    {{- include "corescope.labels" . | nindent 4 }}
+    app.kubernetes.io/name: discord-relay
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate  # one poster at a time
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: discord-relay
+  template:
+    metadata:
+      labels:
+        {{- include "corescope.labels" . | nindent 8 }}
+        app.kubernetes.io/name: discord-relay
+    spec:
+      automountServiceAccountToken: false
+      enableServiceLinks: false
+      securityContext:
+        {{- include "corescope.podSecurity" (dict "uid" 10001) | nindent 8 }}
+      containers:
+        - name: relay
+          image: {{ include "corescope.image" $d.image }}
+          securityContext:
+            {{- include "corescope.containerSecurity" . | nindent 12 }}
+            readOnlyRootFilesystem: true
+          env:
+            - name: CORESCOPE_URL
+              value: http://corescope
+            - name: CHANNELS
+              value: {{ join "," $channels | quote }}
+            - name: POLL_SECONDS
+              value: {{ $d.pollSeconds | quote }}
+          resources:
+            {{- toYaml $d.resources | nindent 12 }}
+          volumeMounts:
+            - name: state
+              mountPath: /var/lib/relay
+            - name: secrets
+              mountPath: /srv/secrets
+              readOnly: true
+      volumes:
+        - name: state
+          persistentVolumeClaim:
+            claimName: discord-relay-state
+        - name: secrets
+          secret:
+            secretName: discord
+            defaultMode: 0440
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: discord-relay-state
+  labels:
+    {{- include "corescope.labels" . | nindent 4 }}
+    app.kubernetes.io/name: discord-relay
+  {{- include "corescope.keep" $d.state.keep | nindent 2 }}
+spec:
+  accessModes: [ReadWriteOnce]
+  storageClassName: {{ $d.state.storageClassName }}
+  resources:
+    requests:
+      storage: {{ $d.state.size }}
+---
+# The webhook URLs, one file per channel, from OpenBao (secret/dmz-corescope/discord).
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: discord
+  labels:
+    {{- include "corescope.labels" . | nindent 4 }}
+spec:
+  refreshInterval: {{ .Values.secrets.refreshInterval }}
+  secretStoreRef:
+    kind: SecretStore
+    name: openbao
+  target:
+    name: discord
+  data:
+    {{- range $d.channels }}
+    - secretKey: {{ .secretKey }}
+      remoteRef:
+        key: {{ $.Release.Namespace }}/discord
+        property: {{ .secretKey }}
+    {{- end }}
+{{- end }}

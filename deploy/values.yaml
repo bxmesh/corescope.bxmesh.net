@@ -64,6 +64,32 @@ corescope:
     size: 50Gi  # placeholder: the owner sets it from the measured folder size
     keep: true
 
+# The Discord relay (discord/relay.py): posts each new message on these MeshCore channels, as
+# CoreScope decodes them, to that channel's Discord webhook (the owner, 2 November 2026). It reads
+# CoreScope's API inside this namespace. The webhook URLs are secrets: OpenBao,
+# secret/dmz-corescope/discord, one key per channel (secretKey below).
+discord:
+  enabled: true
+  image:
+    repository: ghcr.io/bxmesh/corescope.bxmesh.net/discord
+    tag: ""  # CI writes the commit SHA here, on the pull request that changed discord/ (O14)
+  # CoreScope's channel name (as /api/channels lists it) and the key of its webhook in OpenBao.
+  channels:
+    - {name: "#bathurst", secretKey: bathurst}   # Discord: #bathurst
+    - {name: Public, secretKey: public}          # Discord: #nsw-public-traffic
+  pollSeconds: 15
+  # The last message posted on each channel, so a restart neither skips nor repeats.
+  state:
+    storageClassName: ceph-block
+    size: 1Gi
+    keep: true
+  resources:
+    requests:
+      cpu: 10m
+      memory: 32Mi
+    limits:
+      memory: 64Mi
+
 # The routes, on BxMesh's own gateway (O73).
 route:
   gateway: bxmesh
