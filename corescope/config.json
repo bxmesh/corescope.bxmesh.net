@@ -170,7 +170,7 @@
     "observerStaleMinutes": 1440
   },
   "pathTrust": {
-    "minHashBytesForMapping": 1
+    "minHashBytesForMapping": 2
   },
   "defaultRegion": "BHS",
   "mapDefaults": {

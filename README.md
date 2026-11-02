@@ -29,5 +29,15 @@ The polygon is derived from NSW Mesh's BHS region (feature `IATA` `BHS` in
 <https://nswmesh.au/geo/All-NSW-Regions-Mini.geojson>, which carries no licence). It's used here
 with the permission of an NSW Mesh admin, the owner, given on 28 October 2026.
 
+## Path hops: 1-byte hashes aren't used for mapping
+
+A MeshCore path names each repeater by a short hash of its key, often 1 byte: only 256 values, so
+on a busy mesh several repeaters share each one. With `pathTrust.minHashBytesForMapping` at 2 in
+`corescope/config.json` (the owner, 2 November 2026), CoreScope doesn't use 1-byte hops as
+evidence for its map of links and its neighbour graph, so it draws fewer guessed links. Packets and
+their paths are still stored as received. The cost, in CoreScope's own words: it "can remove a
+large share of your neighbour-graph edges and resolved paths with nothing in the UI explaining
+why", since most of the mesh still uses 1-byte hashes. Back to 1 to undo it.
+
 The customizer's GeoFilter tab is hidden (`customizer.disabledTabs`): the entrypoint renders
 `config.json` from the image at every start, so a change saved there would be lost.
