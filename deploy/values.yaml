@@ -53,20 +53,21 @@ corescope:
         memory: 128Mi
       limits:
         cpu: "2"
-        memory: 3Gi
+        memory: 4Gi  # the owner, 3 November: keep generous limits while the history is short
   server:
     # Used p95 852 MiB, max 871 MiB, with its packet store holding the last 7 days
     # (corescope/config.json, retentionHours 168): 267 MB for 41,966 packets on 3 November. The
-    # store's own cap (maxMemoryMB 8192) is now above the limit; the 7 days are what bound it.
-    # GOMEMLIMIT stays at least 1.5x its working set and under the limit.
-    gomemlimit: 3GiB
+    # store's own cap (maxMemoryMB 8192) bounds it. The limit stays above that cap, so the store
+    # can fill to its designed size without the server being killed (the owner, 3 November: careful
+    # not to trim too far; only 16.5 h of history so far). GOMEMLIMIT sits under the limit.
+    gomemlimit: 9GiB
     resources:
       requests:
         cpu: 250m
         memory: 1536Mi
       limits:
         cpu: "2"
-        memory: 4Gi
+        memory: 10Gi
   # The SQLite database, the ingestor's stats file and its pre-upgrade backups. On cluster-01
   # it's on the T620's own disks (dmz_data), not CephFS.
   data:
