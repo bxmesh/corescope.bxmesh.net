@@ -19,9 +19,13 @@ only our broker, and started fresh here: cluster-01's data isn't restored.
 
 ## The region (geofence)
 
-CoreScope keeps only nodes inside BxMesh's region: `geo_filter` in `corescope/config.json` is the
-BHS region, simplified to 22 points, with no buffer: the region's own boundary is the edge (the
-owner, 5 November 2026; it was 25 km until then). With `foreignAdverts.mode` set to `drop`,
+CoreScope keeps only nodes inside BxMesh's region: `geo_filter` in `corescope/config.json` is NSW
+Mesh's BHS boundary exactly, all 14,414 points of the GeoJSON's ring as published, with no buffer
+(the owner, 5 November 2026: the boundary MeshMapper's BHS region uses). Until then it was a
+22-point simplification with a 25 km buffer, carried over from cluster-01's setup (zindello/cluster
+956d351, 24 October); the owner never asked for or approved either, and the simplified edge strayed
+up to 37 km from the boundary, taking in Blackheath, Medlow Bath and Leura. GeoJSON points are
+[lon, lat]; CoreScope's are [lat, lon]. With `foreignAdverts.mode` set to `drop`,
 an advert from outside it isn't stored at all, so that node never appears. Packets relayed across
 the region are still stored. A hop through an out-of-region repeater can't be matched to a known
 node, so it may show as unresolved or be credited to an in-region repeater with the same 1-byte
