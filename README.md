@@ -20,11 +20,17 @@ only our broker, and started fresh here: cluster-01's data isn't restored.
 ## The region (geofence)
 
 CoreScope keeps only nodes inside BxMesh's region: `geo_filter` in `corescope/config.json` is the
-BHS region, simplified to 22 points, with a 25 km buffer. With `foreignAdverts.mode` set to `drop`,
+BHS region, simplified to 22 points, with no buffer: the region's own boundary is the edge (the
+owner, 5 November 2026; it was 25 km until then). With `foreignAdverts.mode` set to `drop`,
 an advert from outside it isn't stored at all, so that node never appears. Packets relayed across
 the region are still stored. A hop through an out-of-region repeater can't be matched to a known
 node, so it may show as unresolved or be credited to an in-region repeater with the same 1-byte
 prefix.
+
+Narrowing the filter doesn't remove nodes already stored. CoreScope's geo-prune does
+(`POST /api/admin/prune-geo-filter`, admin only): a dry run lists the stored nodes with a GPS fix
+outside the filter, and a confirmed run deletes those nodes' records. Nodes without a GPS fix are
+always kept, and the packets they sent or relayed stay until the packet retention ages them out.
 
 The polygon is derived from NSW Mesh's BHS region (feature `IATA` `BHS` in
 <https://nswmesh.au/geo/All-NSW-Regions-Mini.geojson>, which carries no licence). It's used here
