@@ -36,7 +36,7 @@ Narrowing the filter doesn't remove nodes already stored. CoreScope's geo-prune 
 outside the filter, and a confirmed run deletes those nodes' records. Nodes without a GPS fix are
 always kept, and the packets they sent or relayed stay until the packet retention ages them out.
 
-The polygon is derived from NSW Mesh's BHS region (feature `IATA` `BHS` in
+The polygon is NSW Mesh's BHS region (feature `IATA` `BHS` in
 <https://nswmesh.au/geo/All-NSW-Regions-Mini.geojson>, which carries no licence). It's used here
 with the permission of an NSW Mesh admin, the owner, given on 28 October 2026.
 
