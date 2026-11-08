@@ -6,7 +6,10 @@
 #
 # The CoreScope release to run is the one the owner approved, v3.15.0: an exact
 # vX.Y.Z, never latest or edge, pinned by digest. Change both lines together.
-FROM ghcr.io/kpa-clawbot/corescope:v3.15.0@sha256:1b263a5bec2fa9eac2ed7f5b9fbaa40265af3472d3ed5706b3ecc1cd7f6a93a7
+# Built by BXMesh's fork, bxmesh/corescope: upstream's release with three of the
+# Live page's defaults changed (its BXMESH.md; O292). Back to
+# ghcr.io/kpa-clawbot/corescope once upstream has them.
+FROM ghcr.io/bxmesh/corescope:v3.15.0-bxmesh@sha256:1b6fe1695886795b6bd597e1113ceac83260d9ed6364d182814ed9eb004976c7
 ARG RELEASE_TAG=v3.15.0
 # GOMEMLIMIT: CoreScope wants at least 1.5x its working set. 2GiB is the
 # ingestor's; the server overrides it (deploy/values.yaml, with the caps).
