@@ -9,7 +9,7 @@
 # Built by BXMesh's fork, bxmesh/corescope: upstream's release with three of the
 # Live page's defaults changed (its BXMESH.md; O292). Back to
 # ghcr.io/kpa-clawbot/corescope once upstream has them.
-FROM ghcr.io/bxmesh/corescope:v3.15.0-bxmesh@sha256:e1bf948e934bb60142d1142fafc0fcc062b43a1c22a7a2aaad66dfe4dbcc937d
+FROM ghcr.io/bxmesh/corescope:v3.15.0-bxmesh@sha256:1b6fe1695886795b6bd597e1113ceac83260d9ed6364d182814ed9eb004976c7
 ARG RELEASE_TAG=v3.15.0
 # GOMEMLIMIT: CoreScope wants at least 1.5x its working set. 2GiB is the
 # ingestor's; the server overrides it (deploy/values.yaml, with the caps).
