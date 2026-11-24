@@ -14,10 +14,12 @@ emqx:
     repository: ghcr.io/bxmesh/corescope.bxmesh.net/emqx
     tag: "9d48f41a4486e809bc9fd553b58916003489971c"  # CI writes the commit SHA here, on the pull request that changed emqx/ (O14)
   # cores: 2 and memory: 1024 in services.yml: caps, not reservations. The request is its use on
-  # cluster-02 (2-3 November 2026, 16.5 h: p95 401 MiB, max 404 MiB) plus about a quarter.
+  # cluster-02 (2-3 November 2026, 16.5 h: p95 401 MiB, max 404 MiB) plus about a quarter; over the
+  # 7 days to 24 November 2026 its memory max was 461 MiB, still under it. CPU request from those
+  # 7 days: p95 7m, max 7m.
   resources:
     requests:
-      cpu: 250m
+      cpu: 25m
       memory: 512Mi
     limits:
       cpu: "2"
@@ -46,10 +48,11 @@ corescope:
   # caps (16384 and 32768) were more than the R430's whole 32 GB.
   ingestor:
     # Used at most 30 MiB (the SQLite page cache it writes through is reclaimed at the limit).
-    # The limit stays above the image's GOMEMLIMIT of 2GiB (corescope/Dockerfile).
+    # The limit stays above the image's GOMEMLIMIT of 2GiB (corescope/Dockerfile). CPU request from
+    # the 7 days to 24 November 2026: p95 7m, max 14m (memory max 45 MiB).
     resources:
       requests:
-        cpu: 250m
+        cpu: 25m
         memory: 128Mi
       limits:
         cpu: "2"
@@ -60,11 +63,13 @@ corescope:
     # store's own cap (maxMemoryMB 8192) bounds it. The limit stays above that cap, so the store
     # can fill to its designed size without the server being killed (the owner, 3 November: careful
     # not to trim too far; only 16.5 h of history so far). GOMEMLIMIT sits under the limit.
+    # Requests from the 7 days to 24 November 2026: CPU p95 64m, max 108m; memory max 1,906 MiB,
+    # above the old 1536Mi request, so now max plus a fifth.
     gomemlimit: 9GiB
     resources:
       requests:
-        cpu: 250m
-        memory: 1536Mi
+        cpu: 100m
+        memory: 2304Mi
       limits:
         cpu: "2"
         memory: 10Gi
@@ -94,10 +99,11 @@ discord:
     storageClassName: ceph-block
     size: 1Gi
     keep: true
+  # Memory request from the 7 days to 24 November 2026: max 36 MiB, plus a fifth.
   resources:
     requests:
       cpu: 10m
-      memory: 32Mi
+      memory: 48Mi
     limits:
       memory: 64Mi
 
