@@ -7,12 +7,17 @@ is posted once. Which messages were posted is remembered as the highest packetId
 STATE_DIR, so a restart neither skips nor repeats; on a channel's first run it starts from the
 newest message and posts nothing older.
 
+Two files in HEALTH_DIR carry the time of the loop's last turn, for the health checks
+(deploy/templates/discord.yaml): `alive`, rewritten every turn, and `ready`, rewritten only when
+that turn read every channel from CoreScope and Discord took every message it was sent.
+
 Configuration (environment):
   CORESCOPE_URL    CoreScope inside the cluster, e.g. http://corescope
   CHANNELS         channel=secret-file pairs, comma-separated, e.g. "#bathurst=bathurst,Public=public"
   SECRETS_DIR      folder of webhook URL files, one per secret-file name (default /srv/secrets)
   STATE_DIR        folder for the state file (default /var/lib/relay)
   POLL_SECONDS     default 5
+  HEALTH_DIR       folder for the health files (default /tmp)
 
 Standard library only. The webhook URLs are secrets: never logged.
 """
@@ -31,6 +36,7 @@ SECRETS_DIR = os.environ.get("SECRETS_DIR", "/srv/secrets")
 STATE_DIR = os.environ.get("STATE_DIR", "/var/lib/relay")
 POLL_SECONDS = float(os.environ.get("POLL_SECONDS", "5"))
 STATE_FILE = os.path.join(STATE_DIR, "state.json")
+HEALTH_DIR = os.environ.get("HEALTH_DIR", "/tmp")
 PAGE = 50  # messages read per channel per poll; far more than arrive in 5 s
 DISCORD_MAX = 2000  # Discord's limit on a message's content
 NAME_MAX = 80  # Discord's limit on a webhook post's username
@@ -66,6 +72,12 @@ def save_state(state):
     with open(tmp, "w") as f:
         json.dump(state, f)
     os.replace(tmp, STATE_FILE)
+
+
+def mark(name):
+    """The time now, in HEALTH_DIR/name, whose age a health check reads."""
+    with open(os.path.join(HEALTH_DIR, name), "w") as f:
+        f.write(f"{time.time():.0f}\n")
 
 
 USER_AGENT = "bxmesh-discord-relay"
@@ -133,11 +145,14 @@ def post(url, message):
 
 
 def poll(chans, state):
+    """One pass over the channels; True if it read every channel and Discord took every post."""
+    ok = True
     for channel, url in chans:
         try:
             msgs = messages(channel)
         except (urllib.error.URLError, TimeoutError, ValueError) as e:
             log(f"{channel}: CoreScope unreachable: {e}")
+            ok = False
             continue
         newest = max((m["packetId"] for m in msgs), default=0)
         if channel not in state:
@@ -149,11 +164,13 @@ def poll(chans, state):
             if m["packetId"] <= state[channel] or not m.get("text"):
                 continue
             if not post(url, m):
+                ok = False
                 break  # try again next poll, from this message
             state[channel] = m["packetId"]
             save_state(state)
             log(f"{channel}: posted packet {m['packetId']}")
             time.sleep(0.5)  # well inside a webhook's 5 requests per 2 seconds
+    return ok
 
 
 def main():
@@ -161,7 +178,9 @@ def main():
     state = load_state()
     log(f"relaying {', '.join(c for c, _ in chans)} from {CORESCOPE_URL} every {POLL_SECONDS:g} s")
     while True:
-        poll(chans, state)
+        mark("alive")
+        if poll(chans, state):
+            mark("ready")
         time.sleep(POLL_SECONDS)
 
 
