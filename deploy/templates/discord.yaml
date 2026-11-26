@@ -44,11 +44,34 @@ spec:
               value: {{ join "," $channels | quote }}
             - name: POLL_SECONDS
               value: {{ $d.pollSeconds | quote }}
+          # Its job is reading CoreScope and posting to Discord: relay.py rewrites /tmp/ready after
+          # each poll that read every channel and had every post taken, and /tmp/alive after every
+          # poll. No Service is in front of it, so readiness only shows the truth (in Argo CD and
+          # kubectl): not ready while CoreScope or Discord can't be reached, or Discord refuses a
+          # message. Liveness restarts it only when the loop has stopped turning: an unreachable
+          # CoreScope or Discord still turns it, and a restart wouldn't bring either back.
+          {{- $p := .Values.probes.relay }}
+          readinessProbe:
+            exec:
+              command:
+                - sh
+                - -c
+                - f=/tmp/ready; [ -f "$f" ] && [ $(( $(date +%s) - $(stat -c %Y "$f") )) -lt {{ $p.readySeconds }} ]
+            {{- toYaml $p.readiness | nindent 12 }}
+          livenessProbe:
+            exec:
+              command:
+                - sh
+                - -c
+                - f=/tmp/alive; [ -f "$f" ] && [ $(( $(date +%s) - $(stat -c %Y "$f") )) -lt {{ $p.aliveSeconds }} ]
+            {{- toYaml $p.liveness | nindent 12 }}
           resources:
             {{- toYaml $d.resources | nindent 12 }}
           volumeMounts:
             - name: state
               mountPath: /var/lib/relay
+            - name: tmp  # the health files: rewritten every 5 s, so not on the Ceph volume
+              mountPath: /tmp
             - name: secrets
               mountPath: /srv/secrets
               readOnly: true
@@ -60,6 +83,9 @@ spec:
           secret:
             secretName: discord
             defaultMode: 0440
+        - name: tmp
+          emptyDir:
+            sizeLimit: 1Mi
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim

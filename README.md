@@ -63,6 +63,8 @@ Each post shows as from its mesh sender: the webhook post's name is the sender's
 
 - It remembers the last message posted on each channel on a small volume, so a restart neither
   skips nor repeats. On its very first start it posts nothing older than the newest message.
+- It shows as ready only while it's reading CoreScope and Discord is taking its posts, and is
+  restarted only if its loop stops turning (`deploy/templates/discord.yaml`).
 - Mentions are off: a mesh message can't ping anyone on Discord. Discord's markdown is escaped, so
   the text shows as it was sent.
 - The webhook URLs are secrets, in OpenBao at `secret/dmz-corescope/discord` (`bathurst`, `public`).

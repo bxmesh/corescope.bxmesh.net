@@ -126,6 +126,40 @@ probes:
     periodSeconds: 30
     timeoutSeconds: 5
     failureThreshold: 6
+  # The ingestor's checks (templates/corescope.yaml): liveness only, for the process stopping.
+  # Generous, so a storage or broker blip of a few minutes never restarts it.
+  ingestor:
+    # Up to an hour to start: a new release copies the databases aside and migrates them first.
+    startup:
+      periodSeconds: 10
+      timeoutSeconds: 5
+      failureThreshold: 360
+    # Restarted when its stats file hasn't been rewritten for 5 minutes (it is every second), or
+    # its watchdog hasn't ticked for 10 (it does every minute), checked every minute, five times
+    # in a row: 9 to 15 minutes stuck.
+    statsStaleSeconds: 300
+    watchdogStaleSeconds: 600
+    liveness:
+      periodSeconds: 60
+      timeoutSeconds: 10
+      failureThreshold: 5
+  # The Discord relay's checks (templates/discord.yaml), against the files relay.py rewrites.
+  relay:
+    # Ready while a poll that did its whole job (every channel read, every post taken) was in
+    # the last minute: twelve polls at discord.pollSeconds 5. Checked every 10 s, three in a row.
+    readySeconds: 60
+    readiness:
+      periodSeconds: 10
+      timeoutSeconds: 5
+      failureThreshold: 3
+    # Restarted when no poll has started for 5 minutes, checked every minute, five times in a
+    # row: 9 to 10 minutes stuck. A poll that can't reach CoreScope or Discord gives up within its
+    # 30-second timeouts, so an outage never trips it.
+    aliveSeconds: 300
+    liveness:
+      periodSeconds: 60
+      timeoutSeconds: 10
+      failureThreshold: 5
 
 # Secrets, from OpenBao through External Secrets (spec: Security, secrets and access).
 secrets:

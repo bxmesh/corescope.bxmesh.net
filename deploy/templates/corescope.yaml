@@ -35,6 +35,36 @@ spec:
               value: ingestor
             - name: BXMESH_BROKER
               value: {{ $c.broker | quote }}
+          # No readiness check: a container's readiness is the whole pod's, so an ingestor cut off
+          # from the broker would take CoreScope's pages offline, when the server can still show
+          # everything stored. CoreScope already mends its own MQTT link: its watchdog checks the
+          # connection every minute and forces a reconnect after 5 minutes of silence. So the
+          # checks here are for the process itself stopping, from what it already writes: its
+          # stats file, rewritten every second (CORESCOPE_INGESTOR_STATS, corescope/Dockerfile),
+          # and in it watchdogLastTickUnix, which that watchdog stamps every minute (CoreScope's
+          # own signal for a wedged watchdog). Restarting it restarts the ingestor alone.
+          {{- $p := .Values.probes.ingestor }}
+          # Started once the stats file is newer than the config.json the entrypoint renders at
+          # each start: written by this run, not left by the last. Generous, so a release's
+          # database copy and migrations are never cut short.
+          startupProbe:
+            exec:
+              command:
+                - sh
+                - -c
+                - '[ "$CORESCOPE_INGESTOR_STATS" -nt /app/config.json ]'
+            {{- toYaml $p.startup | nindent 12 }}
+          livenessProbe:
+            exec:
+              command:
+                - sh
+                - -c
+                - >-
+                  f=$CORESCOPE_INGESTOR_STATS; now=$(date +%s);
+                  [ $(( now - $(stat -c %Y "$f") )) -lt {{ $p.statsStaleSeconds }} ] &&
+                  tick=$(grep -o '"watchdogLastTickUnix":[0-9]*' "$f" | cut -d: -f2) &&
+                  [ -n "$tick" ] && [ $(( now - tick )) -lt {{ $p.watchdogStaleSeconds }} ]
+            {{- toYaml $p.liveness | nindent 12 }}
           resources:
             {{- toYaml $c.ingestor.resources | nindent 12 }}
           volumeMounts:
