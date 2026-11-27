@@ -1,7 +1,7 @@
 # EMQX, the MQTT broker observers in Bathurst and the Central West stream into
 # (mqtt.bxmesh.net). The official image, with our config, ACL and an entrypoint
 # that turns /srv/secrets into EMQX's settings.
-FROM emqx/emqx:6.3.2@sha256:135116400e11b25224350b2e55c874f4e224d357b593fb554ca1b1f398c631ac
+FROM emqx/emqx:6.3.3@sha256:54778dba62a5cbcb03ca381c9bceb3d8a87cab9e3da155ed3607d994454df900
 
 # EMQX runs as the image's own user, emqx (uid 1000), as the dmz zone's Pod
 # Security (restricted) requires. On cluster-01 it ran as root only because
