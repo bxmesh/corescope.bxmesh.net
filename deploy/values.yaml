@@ -12,7 +12,7 @@ restored: true
 emqx:
   image:
     repository: ghcr.io/bxmesh/corescope.bxmesh.net/emqx
-    tag: "9d48f41a4486e809bc9fd553b58916003489971c"  # CI writes the commit SHA here, on the pull request that changed emqx/ (O14)
+    tag: "5dd123ade5526d3dade042f908407bec0df5a448"  # CI writes the commit SHA here, on the pull request that changed emqx/ (O14)
   # cores: 2 and memory: 1024 in services.yml: caps, not reservations. The request is its use on
   # cluster-02 (2-3 November 2026, 16.5 h: p95 401 MiB, max 404 MiB) plus about a quarter; over the
   # 7 days to 24 November 2026 its memory max was 461 MiB, still under it. CPU request from those
