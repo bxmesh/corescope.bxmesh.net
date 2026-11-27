@@ -1,4 +1,36 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "description": "Renovate opens a pull request for each new release of anything pinned here, which the owner merges (R5). The shared preset applies (zindello-cluster/cluster-platform: renovate/preset.json); this file holds only what's particular to this repo."
+  "description": "Renovate opens a pull request for each new release of anything pinned here, which the owner merges (R5). The shared preset applies (zindello-cluster/cluster-platform: renovate/preset.json); this file holds only what's particular to this repo.",
+  "customManagers": [
+    {
+      "description": "CoreScope's release in corescope/Dockerfile's ARG RELEASE_TAG: the release of the FROM line's image, without its -bxmesh suffix, read from the same image's tags so it moves with the FROM line (the entrypoint's pre-upgrade backup and rollback key on it).",
+      "customType": "regex",
+      "managerFilePatterns": ["/^corescope/Dockerfile$/"],
+      "matchStrings": ["ARG RELEASE_TAG=(?<currentValue>v\\d+\\.\\d+\\.\\d+)\\n"],
+      "depNameTemplate": "corescope-release-tag",
+      "packageNameTemplate": "ghcr.io/bxmesh/corescope",
+      "datasourceTemplate": "docker",
+      "extractVersionTemplate": "^(?<version>v\\d+\\.\\d+\\.\\d+)-bxmesh$",
+      "versioningTemplate": "regex:^v(?<major>\\d+)\\.(?<minor>\\d+)\\.(?<patch>\\d+)$"
+    }
+  ],
+  "packageRules": [
+    {
+      "description": "BXMesh's CoreScope image (github.com/bxmesh/corescope), the FROM line and RELEASE_TAG together, in one pull request. The shared preset turns off every ghcr.io/bxmesh/** image, since CI writes their tags; this one is built by the fork and pinned here by hand, so Renovate opens its bumps (the owner, 27 November 2026).",
+      "matchPackageNames": ["ghcr.io/bxmesh/corescope"],
+      "enabled": true,
+      "groupName": "CoreScope"
+    },
+    {
+      "description": "The FROM line: only the fork's release tags (vX.Y.Z-bxmesh), never its sha- tags.",
+      "matchManagers": ["dockerfile"],
+      "matchPackageNames": ["ghcr.io/bxmesh/corescope"],
+      "versioning": "regex:^v(?<major>\\d+)\\.(?<minor>\\d+)\\.(?<patch>\\d+)-bxmesh$"
+    },
+    {
+      "description": "RELEASE_TAG is a plain version, with no digest to pin: the FROM line carries the digest.",
+      "matchDepNames": ["corescope-release-tag"],
+      "pinDigests": false
+    }
+  ]
 }
