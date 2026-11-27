@@ -4,13 +4,15 @@
 # (CORESCOPE_ROLE; see bxmesh-entrypoint.sh). Its bundled supervisord, Caddy
 # and Mosquitto are not used.
 #
-# The CoreScope release to run is the one the owner approved, v3.15.0: an exact
-# vX.Y.Z, never latest or edge, pinned by digest. Change both lines together.
+# The CoreScope release to run is the one the owner approved: an exact vX.Y.Z,
+# never latest or edge, pinned by digest. Change both lines together; Renovate's
+# bump does (renovate.json).
 # Built by BXMesh's fork, bxmesh/corescope: upstream's release with three of the
-# Live page's defaults changed (its BXMESH.md; O292). Back to
-# ghcr.io/kpa-clawbot/corescope once upstream has them.
-FROM ghcr.io/bxmesh/corescope:v3.15.0-bxmesh@sha256:1b6fe1695886795b6bd597e1113ceac83260d9ed6364d182814ed9eb004976c7
-ARG RELEASE_TAG=v3.15.0
+# Live page's defaults changed (its BXMESH.md; O292). An identical change
+# upstream is weighed on its merits, never taken in place of ours by itself
+# (O723).
+FROM ghcr.io/bxmesh/corescope:v3.19.0-bxmesh@sha256:2fddb0380df71212f84e88e60e249d6cbc476c5026cbdbd7511bb9ea93371303
+ARG RELEASE_TAG=v3.19.0
 # GOMEMLIMIT: CoreScope wants at least 1.5x its working set. 2GiB is the
 # ingestor's; the server overrides it (deploy/values.yaml, with the caps).
 ENV DB_PATH=/app/data/meshcore.db \
