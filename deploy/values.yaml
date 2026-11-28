@@ -88,7 +88,7 @@ discord:
   enabled: true
   image:
     repository: ghcr.io/bxmesh/corescope.bxmesh.net/discord
-    tag: "dbdb97b2c333849f4fb56b690820e5f573c90535"  # CI writes the commit SHA here, on the pull request that changed discord/ (O14)
+    tag: "d08ef2d2dee56dd7a0d2b0ca7d2047a42e0a50e1"  # CI writes the commit SHA here, on the pull request that changed discord/ (O14)
   # CoreScope's channel name (as /api/channels lists it) and the key of its webhook in OpenBao.
   channels:
     - {name: "#bathurst", secretKey: bathurst}   # Discord: #bathurst
